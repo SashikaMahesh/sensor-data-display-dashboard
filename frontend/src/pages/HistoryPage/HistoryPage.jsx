@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Grid,
   Card,
   CardContent,
   Typography,
   Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   Alert,
   Chip,
   Paper,
   CircularProgress,
-  Divider,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -36,10 +31,12 @@ import apiService from '../../services/api';
 const HistoryPage = () => {
   const [dateRange, setDateRange] = useState({
     start: startOfDay(subDays(new Date(), 1)), // Yesterday
-    end: endOfDay(new Date()) // Today
+    end: endOfDay(new Date()), // Today
   });
   const [quickSelect, setQuickSelect] = useState('today');
   const [searchTrigger, setSearchTrigger] = useState(0);
+  const [page, setPage] = useState(0); // Current page
+  const pageSize = 15; // Items per page
 
   // Query for historical data
   const {
@@ -47,7 +44,7 @@ const HistoryPage = () => {
     isLoading,
     isError,
     error,
-    isFetching
+    isFetching,
   } = useQuery({
     queryKey: ['temperatureHistory', dateRange.start, dateRange.end, searchTrigger],
     queryFn: () => apiService.getReadingsByDateRange(dateRange.start, dateRange.end),
@@ -68,23 +65,31 @@ const HistoryPage = () => {
     setQuickSelect(period);
     const ranges = apiService.getDateRange(period);
     setDateRange(ranges);
-    setSearchTrigger(prev => prev + 1);
+    setPage(0); // Reset to first page
+    setSearchTrigger((prev) => prev + 1);
   };
 
   // Handle manual search
   const handleSearch = () => {
     if (dateRange.start && dateRange.end) {
       setQuickSelect('custom');
-      setSearchTrigger(prev => prev + 1);
+      setPage(0); // Reset to first page
+      setSearchTrigger((prev) => prev + 1);
     }
   };
 
   // Handle date range changes
   const handleDateRangeChange = (field, value) => {
-    setDateRange(prev => ({
+    setDateRange((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    console.log(`Changing to page ${newPage}`); // Debug page change
+    setPage(newPage);
   };
 
   // Export data to CSV
@@ -93,13 +98,13 @@ const HistoryPage = () => {
 
     const csvContent = [
       ['Timestamp', 'Temperature (°C)', 'Sensor ID', 'Location', 'Status'].join(','),
-      ...historyData.data.map(row => [
+      ...historyData.data.map((row) => [
         format(new Date(row.timestamp), 'yyyy-MM-dd HH:mm:ss'),
         row.temperature,
         row.sensorId || '',
         row.location || '',
-        row.status || 'active'
-      ].join(','))
+        row.status || 'active',
+      ].join(',')),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -111,21 +116,51 @@ const HistoryPage = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  // Calculate period statistics
-  const periodStats = React.useMemo(() => {
-    if (!historyData?.data?.length) return null;
+  // Memoize reversed data
+  const reversedData = useMemo(() => {
+    const data = historyData?.data?.slice().reverse() || [];
+    console.log('Reversed Data Length:', data.length); // Debug data length
+    return data;
+  }, [historyData]);
 
-    const temperatures = historyData.data.map(d => d.temperature);
+  // Calculate paginated data
+  const paginatedData = useMemo(() => {
+    const startIndex = page * pageSize;
+    const endIndex = startIndex + pageSize;
+    const data = reversedData.slice(startIndex, endIndex);
+    console.log(`Paginated Data (Page ${page}):`, data); // Debug paginated data
+    return data;
+  }, [reversedData, page, pageSize]);
+
+  // Debug paginatedData changes
+  useEffect(() => {
+    console.log('paginatedData updated:', paginatedData);
+  }, [paginatedData]);
+
+  // Calculate period statistics
+  const periodStats = useMemo(() => {
+    if (!historyData?.data?.length || !Array.isArray(historyData.data)) {
+      return null;
+    }
+
+    const temperatures = historyData.data
+      .map((d) => d.temperature)
+      .filter((temp) => typeof temp === 'number' && !isNaN(temp));
+
+    if (!temperatures.length) {
+      return null;
+    }
+
     const min = Math.min(...temperatures);
     const max = Math.max(...temperatures);
     const avg = temperatures.reduce((sum, temp) => sum + temp, 0) / temperatures.length;
-    
+
     return {
-      min: min.toFixed(1),
-      max: max.toFixed(1),
-      avg: avg.toFixed(1),
+      min: min.toFixed(2),
+      max: max.toFixed(2),
+      avg: avg.toFixed(2),
       count: temperatures.length,
-      range: `${format(dateRange.start, 'MMM dd')} - ${format(dateRange.end, 'MMM dd')}`
+      range: `${format(dateRange.start, 'MMM dd')} - ${format(dateRange.end, 'MMM dd')}`,
     };
   }, [historyData, dateRange]);
 
@@ -138,34 +173,13 @@ const HistoryPage = () => {
             <Paper sx={{ p: 3, mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <HistoryIcon sx={{ mr: 2, color: 'primary.main', fontSize: 32 }} />
-                <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+                <Typography variant="h5" component="h2" sx={{ fontWeight: 400 }}>
                   Temperature History
                 </Typography>
               </Box>
-              
+
               {/* Date Range Selection */}
               <Grid container spacing={2} alignItems="center">
-                {/* Quick Select */}
-                <Grid item xs={12} sm={6} md={3}>
-                  <FormControl fullWidth size="small">
-                    <InputLabel>Quick Select</InputLabel>
-                    <Select
-                      value={quickSelect}
-                      label="Quick Select"
-                      onChange={(e) => handleQuickSelect(e.target.value)}
-                    >
-                      <MenuItem value="today">Today</MenuItem>
-                      <MenuItem value="yesterday">Yesterday</MenuItem>
-                      <MenuItem value="last7days">Last 7 Days</MenuItem>
-                      <MenuItem value="last30days">Last 30 Days</MenuItem>
-                      <MenuItem value="thisMonth">This Month</MenuItem>
-                      <MenuItem value="lastMonth">Last Month</MenuItem>
-                      <MenuItem value="custom">Custom Range</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Start Date */}
                 <Grid item xs={12} sm={6} md={3}>
                   <DateTimePicker
                     label="Start Date"
@@ -175,8 +189,6 @@ const HistoryPage = () => {
                     maxDate={new Date()}
                   />
                 </Grid>
-
-                {/* End Date */}
                 <Grid item xs={12} sm={6} md={3}>
                   <DateTimePicker
                     label="End Date"
@@ -187,8 +199,6 @@ const HistoryPage = () => {
                     minDate={dateRange.start}
                   />
                 </Grid>
-
-                {/* Search Button */}
                 <Grid item xs={12} sm={6} md={3}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
@@ -229,7 +239,6 @@ const HistoryPage = () => {
                         Period Statistics - {periodStats.range}
                       </Typography>
                     </Box>
-                    
                     <Button
                       variant="outlined"
                       size="small"
@@ -240,7 +249,6 @@ const HistoryPage = () => {
                       Export CSV
                     </Button>
                   </Box>
-                  
                   <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                     <Chip
                       label={`${periodStats.count} Readings`}
@@ -281,13 +289,14 @@ const HistoryPage = () => {
           {historyData?.data && (
             <Grid item xs={12} lg={8}>
               <TemperatureChart
-                data={historyData.data}
+                key={`chart-${page}`} // Force re-render on page change
+                data={paginatedData}
                 title="Historical Temperature Data"
                 height={450}
                 showStats={true}
                 timeFormat={
-                  historyData.data.length > 100 ? 'MM/dd HH:mm' : 
-                  historyData.data.length > 50 ? 'HH:mm' : 
+                  paginatedData.length > 100 ? 'MM/dd HH:mm' :
+                  paginatedData.length > 50 ? 'HH:mm' :
                   'HH:mm:ss'
                 }
               />
@@ -298,11 +307,14 @@ const HistoryPage = () => {
           {historyData?.data && (
             <Grid item xs={12} lg={4}>
               <TemperatureTable
-                data={historyData.data.slice().reverse()} // Most recent first
+                data={reversedData}
                 title="Historical Readings"
                 maxHeight={450}
                 showPagination={true}
-                pageSize={15}
+                pageSize={pageSize}
+                page={page}
+                onPageChange={handlePageChange}
+                totalRows={reversedData.length}
                 animateNewRows={false}
               />
             </Grid>
@@ -312,12 +324,7 @@ const HistoryPage = () => {
           {!isLoading && !isError && historyData?.data?.length === 0 && (
             <Grid item xs={12}>
               <Card>
-                <CardContent sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  alignItems: 'center', 
-                  py: 6
-                }}>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6 }}>
                   <DateIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
                   <Typography variant="h6" color="text.secondary" gutterBottom>
                     No Data Found
@@ -334,82 +341,6 @@ const HistoryPage = () => {
                   >
                     View Today's Data
                   </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-
-          {/* Overall Statistics */}
-          {statsData?.data && (
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <AnalyticsIcon sx={{ mr: 1, color: 'primary.main' }} />
-                    Overall System Statistics
-                  </Typography>
-                  
-                  <Divider sx={{ my: 2 }} />
-                  
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} sm={6} md={2.4}>
-                      <Box textAlign="center">
-                        <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-                          {statsData.data.totalReadings?.toLocaleString() || '0'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Total Readings
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    <Grid item xs={12} sm={6} md={2.4}>
-                      <Box textAlign="center">
-                        <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
-                          {statsData.data.minTemperature?.toFixed(1) || '--'}°C
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          All-time Min
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    <Grid item xs={12} sm={6} md={2.4}>
-                      <Box textAlign="center">
-                        <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
-                          {statsData.data.avgTemperature?.toFixed(1) || '--'}°C
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Overall Average
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    <Grid item xs={12} sm={6} md={2.4}>
-                      <Box textAlign="center">
-                        <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                          {statsData.data.maxTemperature?.toFixed(1) || '--'}°C
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          All-time Max
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    
-                    <Grid item xs={12} sm={6} md={2.4}>
-                      <Box textAlign="center">
-                        <Typography variant="h6" color="text.primary" sx={{ fontWeight: 'bold' }}>
-                          {statsData.data.latestReading 
-                            ? format(new Date(statsData.data.latestReading), 'MMM dd, yyyy')
-                            : '--'
-                          }
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Latest Reading
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
                 </CardContent>
               </Card>
             </Grid>

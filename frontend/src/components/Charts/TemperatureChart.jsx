@@ -178,7 +178,6 @@ const TemperatureChart = ({
                 stroke="#e0e0e0"
                 opacity={0.7}
               />
-
               <XAxis
                 dataKey="formattedTime"
                 stroke="#666"
@@ -188,7 +187,6 @@ const TemperatureChart = ({
                 height={60}
                 interval={Math.max(0, Math.floor(chartData.length / 10))}
               />
-
               <YAxis
                 stroke="#666"
                 fontSize={12}
@@ -200,14 +198,36 @@ const TemperatureChart = ({
                 }}
                 domain={["dataMin - 1", "dataMax + 1"]}
               />
-
               <Tooltip content={<CustomTooltip />} />
               {/* Background color zones */}
-              <ReferenceArea y1={clamp(yMin)} y2={clamp(18)} fill="#90caf9" fillOpacity={0.3} /> // Blue
-<ReferenceArea y1={clamp(18)} y2={clamp(22)} fill="#c3f8d3" fillOpacity={0.3} /> // Green
-<ReferenceArea y1={clamp(22)} y2={clamp(26)} fill="#fcd4a5" fillOpacity={0.3} /> // Amber
-<ReferenceArea y1={clamp(26)} y2={clamp(yMax)} fill="#f5b7a8" fillOpacity={0.3} /> // Red
-
+              <ReferenceArea
+                y1={clamp(yMin)}
+                y2={clamp(18)}
+                fill="#90caf9"
+                fillOpacity={0.3}
+              />{" "}
+              // Blue
+              <ReferenceArea
+                y1={clamp(18)}
+                y2={clamp(22)}
+                fill="#c3f8d3"
+                fillOpacity={0.3}
+              />{" "}
+              // Green
+              <ReferenceArea
+                y1={clamp(22)}
+                y2={clamp(26)}
+                fill="#fcd4a5"
+                fillOpacity={0.3}
+              />{" "}
+              // Amber
+              <ReferenceArea
+                y1={clamp(26)}
+                y2={clamp(yMax)}
+                fill="#f5b7a8"
+                fillOpacity={0.3}
+              />{" "}
+              // Red
               {/* Average temperature reference line */}
               {stats && (
                 <ReferenceLine
@@ -223,7 +243,6 @@ const TemperatureChart = ({
                   }}
                 />
               )}
-
               <Line
                 type="monotone"
                 dataKey="temperature"

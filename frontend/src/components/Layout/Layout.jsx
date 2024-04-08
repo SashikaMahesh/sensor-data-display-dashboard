@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
           {/* App Title */}
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
-              🌡️ Temperature Monitor
+              Temperature Monitor Dashboard
             </Typography>
             
             {/* Connection Status */}
