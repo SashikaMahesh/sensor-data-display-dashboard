@@ -152,7 +152,7 @@ function SocketProvider({ children }) {
   const getStatusColor = (status) => {
     switch (status) {
       case "connected":
-        return "warning";
+        return "success";
       case "sensor_connected":
         return "success";
       case "sensor_disconnected":

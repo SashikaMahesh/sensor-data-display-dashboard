@@ -69,46 +69,6 @@ class ApiService {
     return date.toISOString();
   }
 
-  // Helper method to get date range for common periods
-  getDateRange(period) {
-    const now = new Date();
-    const start = new Date();
-
-    switch (period) {
-      case 'today':
-        start.setHours(0, 0, 0, 0);
-        break;
-      case 'yesterday':
-        start.setDate(now.getDate() - 1);
-        start.setHours(0, 0, 0, 0);
-        now.setDate(now.getDate() - 1);
-        now.setHours(23, 59, 59, 999);
-        break;
-      case 'last7days':
-        start.setDate(now.getDate() - 7);
-        start.setHours(0, 0, 0, 0);
-        break;
-      case 'last30days':
-        start.setDate(now.getDate() - 30);
-        start.setHours(0, 0, 0, 0);
-        break;
-      case 'thisMonth':
-        start.setDate(1);
-        start.setHours(0, 0, 0, 0);
-        break;
-      case 'lastMonth':
-        start.setMonth(now.getMonth() - 1, 1);
-        start.setHours(0, 0, 0, 0);
-        now.setDate(0); // Last day of previous month
-        now.setHours(23, 59, 59, 999);
-        break;
-      default:
-        // Default to today
-        start.setHours(0, 0, 0, 0);
-    }
-
-    return { start, end: now };
-  }
 }
 
 // Create and export a singleton instance

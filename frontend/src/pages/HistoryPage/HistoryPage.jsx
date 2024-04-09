@@ -60,14 +60,6 @@ const HistoryPage = () => {
     staleTime: 300000, // 5 minutes
   });
 
-  // Handle quick date selection
-  const handleQuickSelect = (period) => {
-    setQuickSelect(period);
-    const ranges = apiService.getDateRange(period);
-    setDateRange(ranges);
-    setPage(0); // Reset to first page
-    setSearchTrigger((prev) => prev + 1);
-  };
 
   // Handle manual search
   const handleSearch = () => {
@@ -169,7 +161,7 @@ const HistoryPage = () => {
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={3}>
           {/* Header */}
-          <Grid item xs={12}>
+          <Grid size={{xs:12,lg:7}}>
             <Paper sx={{ p: 3, mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <HistoryIcon sx={{ mr: 2, color: 'primary.main', fontSize: 32 }} />
@@ -180,7 +172,7 @@ const HistoryPage = () => {
 
               {/* Date Range Selection */}
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{xs:12,sm:5,md:4}}>
                   <DateTimePicker
                     label="Start Date"
                     value={dateRange.start}
@@ -189,7 +181,7 @@ const HistoryPage = () => {
                     maxDate={new Date()}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{xs:12,sm:5,md:4}}>
                   <DateTimePicker
                     label="End Date"
                     value={dateRange.end}
@@ -199,7 +191,7 @@ const HistoryPage = () => {
                     minDate={dateRange.start}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6} md={3}>
+                <Grid size={{xs:12,sm:2,md:4}}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                       variant="contained"
@@ -218,7 +210,7 @@ const HistoryPage = () => {
 
           {/* Error Alert */}
           {isError && (
-            <Grid item xs={12}>
+            <Grid ize={{xs:12}}>
               <Alert severity="error" sx={{ mb: 2 }}>
                 <Typography variant="body1">
                   Error loading historical data: {error?.message || 'Unknown error'}
@@ -229,7 +221,7 @@ const HistoryPage = () => {
 
           {/* Period Statistics */}
           {periodStats && (
-            <Grid item xs={12}>
+            <Grid size={{xs:12,lg:5}}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -276,18 +268,18 @@ const HistoryPage = () => {
             </Grid>
           )}
 
-          {/* Loading State */}
+          {/* Loading State
           {isLoading && (
-            <Grid item xs={12}>
+            <Grid size={{xs:12,lg:6}}>
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress size={40} />
               </Box>
             </Grid>
-          )}
+          )} */}
 
           {/* Chart */}
           {historyData?.data && (
-            <Grid item xs={12} lg={8}>
+            <Grid size={{xs:12,lg:7}}>
               <TemperatureChart
                 key={`chart-${page}`} // Force re-render on page change
                 data={paginatedData}
@@ -305,7 +297,7 @@ const HistoryPage = () => {
 
           {/* Data Table */}
           {historyData?.data && (
-            <Grid item xs={12} lg={4}>
+            <Grid size={{xs:12,lg:5}}>
               <TemperatureTable
                 data={reversedData}
                 title="Historical Readings"
