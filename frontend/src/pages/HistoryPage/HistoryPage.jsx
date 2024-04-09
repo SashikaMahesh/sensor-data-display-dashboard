@@ -33,7 +33,6 @@ const HistoryPage = () => {
     start: startOfDay(subDays(new Date(), 1)), // Yesterday
     end: endOfDay(new Date()), // Today
   });
-  const [quickSelect, setQuickSelect] = useState('today');
   const [searchTrigger, setSearchTrigger] = useState(0);
   const [page, setPage] = useState(0); // Current page
   const pageSize = 15; // Items per page
@@ -60,11 +59,9 @@ const HistoryPage = () => {
     staleTime: 300000, // 5 minutes
   });
 
-
   // Handle manual search
   const handleSearch = () => {
     if (dateRange.start && dateRange.end) {
-      setQuickSelect('custom');
       setPage(0); // Reset to first page
       setSearchTrigger((prev) => prev + 1);
     }
@@ -80,7 +77,7 @@ const HistoryPage = () => {
 
   // Handle page change
   const handlePageChange = (newPage) => {
-    console.log(`Changing to page ${newPage}`); // Debug page change
+    console.log(`HistoryPage: Changing to page ${newPage}`);
     setPage(newPage);
   };
 
@@ -89,13 +86,10 @@ const HistoryPage = () => {
     if (!historyData?.data?.length) return;
 
     const csvContent = [
-      ['Timestamp', 'Temperature (°C)', 'Sensor ID', 'Location', 'Status'].join(','),
+      ['Timestamp', 'Temperature (°C)'].join(','),
       ...historyData.data.map((row) => [
         format(new Date(row.timestamp), 'yyyy-MM-dd HH:mm:ss'),
         row.temperature,
-        row.sensorId || '',
-        row.location || '',
-        row.status || 'active',
       ].join(',')),
     ].join('\n');
 
@@ -111,7 +105,7 @@ const HistoryPage = () => {
   // Memoize reversed data
   const reversedData = useMemo(() => {
     const data = historyData?.data?.slice().reverse() || [];
-    console.log('Reversed Data Length:', data.length); // Debug data length
+    console.log('Reversed Data Length:', data.length);
     return data;
   }, [historyData]);
 
@@ -120,7 +114,7 @@ const HistoryPage = () => {
     const startIndex = page * pageSize;
     const endIndex = startIndex + pageSize;
     const data = reversedData.slice(startIndex, endIndex);
-    console.log(`Paginated Data (Page ${page}):`, data); // Debug paginated data
+    console.log(`Paginated Data (Page ${page}):`, data);
     return data;
   }, [reversedData, page, pageSize]);
 
@@ -161,7 +155,7 @@ const HistoryPage = () => {
       <Box sx={{ flexGrow: 1 }}>
         <Grid container spacing={3}>
           {/* Header */}
-          <Grid size={{xs:12,lg:7}}>
+          <Grid size={{ xs: 12, lg: 7 }}>
             <Paper sx={{ p: 3, mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <HistoryIcon sx={{ mr: 2, color: 'primary.main', fontSize: 32 }} />
@@ -172,7 +166,7 @@ const HistoryPage = () => {
 
               {/* Date Range Selection */}
               <Grid container spacing={2} alignItems="center">
-                <Grid size={{xs:12,sm:5,md:4}}>
+                <Grid size={{ xs: 12, sm: 5, md: 4 }}>
                   <DateTimePicker
                     label="Start Date"
                     value={dateRange.start}
@@ -181,7 +175,7 @@ const HistoryPage = () => {
                     maxDate={new Date()}
                   />
                 </Grid>
-                <Grid size={{xs:12,sm:5,md:4}}>
+                <Grid size={{ xs: 12, sm: 5, md: 4 }}>
                   <DateTimePicker
                     label="End Date"
                     value={dateRange.end}
@@ -191,7 +185,7 @@ const HistoryPage = () => {
                     minDate={dateRange.start}
                   />
                 </Grid>
-                <Grid size={{xs:12,sm:2,md:4}}>
+                <Grid size={{ xs: 12, sm: 2, md: 4 }}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                       variant="contained"
@@ -210,7 +204,7 @@ const HistoryPage = () => {
 
           {/* Error Alert */}
           {isError && (
-            <Grid ize={{xs:12}}>
+            <Grid size={{ xs: 12 }}>
               <Alert severity="error" sx={{ mb: 2 }}>
                 <Typography variant="body1">
                   Error loading historical data: {error?.message || 'Unknown error'}
@@ -221,7 +215,7 @@ const HistoryPage = () => {
 
           {/* Period Statistics */}
           {periodStats && (
-            <Grid size={{xs:12,lg:5}}>
+            <Grid size={{ xs: 12, lg: 5 }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -268,20 +262,10 @@ const HistoryPage = () => {
             </Grid>
           )}
 
-          {/* Loading State
-          {isLoading && (
-            <Grid size={{xs:12,lg:6}}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress size={40} />
-              </Box>
-            </Grid>
-          )} */}
-
           {/* Chart */}
           {historyData?.data && (
-            <Grid size={{xs:12,lg:7}}>
+            <Grid size={{ xs: 12, lg: 7 }}>
               <TemperatureChart
-                key={`chart-${page}`} // Force re-render on page change
                 data={paginatedData}
                 title="Historical Temperature Data"
                 height={450}
@@ -297,9 +281,9 @@ const HistoryPage = () => {
 
           {/* Data Table */}
           {historyData?.data && (
-            <Grid size={{xs:12,lg:5}}>
+            <Grid size={{ xs: 12, lg: 5 }}>
               <TemperatureTable
-                data={reversedData}
+                data={paginatedData} // Use paginated data
                 title="Historical Readings"
                 maxHeight={450}
                 showPagination={true}
@@ -314,7 +298,7 @@ const HistoryPage = () => {
 
           {/* No Data Message */}
           {!isLoading && !isError && historyData?.data?.length === 0 && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Card>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6 }}>
                   <DateIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
@@ -326,13 +310,6 @@ const HistoryPage = () => {
                     <br />
                     Try selecting a different date range or check if the sensor was active during this period.
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleQuickSelect('today')}
-                    sx={{ mt: 2 }}
-                  >
-                    View Today's Data
-                  </Button>
                 </CardContent>
               </Card>
             </Grid>

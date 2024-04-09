@@ -112,12 +112,12 @@ const HomePage = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <SensorIcon fontSize="small" color="action" />
             <Typography variant="body2" color="text.secondary">
               {lastReading.sensorName || "Temperature Sensor"}
             </Typography>
-          </Box>
+          </Box> */}
         </CardContent>
       </Card>
     );
