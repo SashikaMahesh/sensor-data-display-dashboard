@@ -49,17 +49,11 @@ const HomePage = () => {
         <Card sx={{ height: "100%", display: "flex", alignItems: "center" }}>
           <CardContent sx={{ width: "100%" }}>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <TempIcon sx={{ mr: 1, color: "text.secondary" }} />
-              <Typography variant="h6" color="text.secondary">
-                Current Temperature
-              </Typography>
+              <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+              <Skeleton variant="text" width="60%" height={24} />
             </Box>
-            <Typography variant="h3" color="text.secondary" sx={{ mb: 1 }}>
-              -- °C
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Waiting for data...
-            </Typography>
+            <Skeleton variant="text" width="50%" height={56} sx={{ mb: 1 }} />
+            <Skeleton variant="text" width="70%" height={20} />
           </CardContent>
         </Card>
       );
@@ -111,13 +105,6 @@ const HomePage = () => {
               {format(new Date(lastReading.timestamp), "MMM dd, HH:mm:ss")}
             </Typography>
           </Box>
-
-          {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <SensorIcon fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
-              {lastReading.sensorName || "Temperature Sensor"}
-            </Typography>
-          </Box> */}
         </CardContent>
       </Card>
     );
@@ -132,13 +119,12 @@ const HomePage = () => {
             <Grid item xs={12} sm={4} key={index}>
               <Card>
                 <CardContent>
-                  <Skeleton variant="text" width="60%" />
-                  <Skeleton
-                    variant="text"
-                    width="40%"
-                    sx={{ fontSize: "1.5rem" }}
-                  />
-                  <Skeleton variant="text" width="80%" />
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+                    <Skeleton variant="text" width="60%" height={20} />
+                  </Box>
+                  <Skeleton variant="text" width="40%" height={32} sx={{ mb: 1 }} />
+                  <Skeleton variant="text" width="80%" height={16} />
                 </CardContent>
               </Card>
             </Grid>
@@ -203,6 +189,111 @@ const HomePage = () => {
     );
   };
 
+  // System Status Skeleton
+  const SystemStatusSkeleton = () => (
+    <Paper sx={{ p: 2, backgroundColor: "background.default" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 2,
+        }}
+      >
+        <Skeleton variant="text" width="30%" height={24} />
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Skeleton variant="rounded" width={120} height={24} />
+          <Skeleton variant="rounded" width={100} height={24} />
+          <Skeleton variant="rounded" width={140} height={24} />
+        </Box>
+      </Box>
+    </Paper>
+  );
+
+  // System Status Component
+  const SystemStatus = () => {
+    // Show skeleton if not connected or no connection info
+    if (!isConnected || !connectionInfo) {
+      return <SystemStatusSkeleton />;
+    }
+
+    return (
+      <Paper sx={{ p: 2, backgroundColor: "background.default" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Typography variant="h6" color="text.secondary">
+            System Status
+          </Typography>
+
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Chip
+              label={`Connection: ${connectionInfo.statusText}`}
+              color={connectionInfo.statusColor}
+              variant="outlined"
+              size="small"
+            />
+
+            <Chip
+              label={`Data Points: ${chartData.length}`}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+
+            {lastReading && (
+              <Chip
+                label={`Last Update: ${format(
+                  new Date(lastReading.timestamp),
+                  "HH:mm:ss"
+                )}`}
+                color="success"
+                variant="outlined"
+                size="small"
+              />
+            )}
+          </Box>
+        </Box>
+      </Paper>
+    );
+  };
+
+  // Chart Skeleton
+  const ChartSkeleton = () => (
+    <Card sx={{ height: 400 }}>
+      <CardContent>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+          <Skeleton variant="text" width="40%" height={24} />
+        </Box>
+        <Skeleton variant="rectangular" width="100%" height={320} />
+      </CardContent>
+    </Card>
+  );
+
+  // Table Skeleton
+  const TableSkeleton = () => (
+    <Card sx={{ height: 400 }}>
+      <CardContent>
+        <Skeleton variant="text" width="40%" height={24} sx={{ mb: 2 }} />
+        {[...Array(8)].map((_, index) => (
+          <Box key={index} sx={{ display: "flex", gap: 2, mb: 1 }}>
+            <Skeleton variant="text" width="30%" height={20} />
+            <Skeleton variant="text" width="25%" height={20} />
+            <Skeleton variant="text" width="45%" height={20} />
+          </Box>
+        ))}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       {/* Connection Status Alert */}
@@ -214,7 +305,7 @@ const HomePage = () => {
         </Alert>
       )}
 
-      {isConnected && connectionInfo.status === "sensor_disconnected" && (
+      {isConnected && connectionInfo?.status === "sensor_disconnected" && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="body1">
             Connected to server but sensor is offline. No new data is being
@@ -224,51 +315,9 @@ const HomePage = () => {
       )}
 
       <Grid container spacing={3}>
-        {/* System Status */}
+        {/* System Status - Mobile/Tablet */}
         <Grid size={{ md: 12, lg: 4 }} sx={{display:{md:"block",lg:"none"}}}>
-          <Paper sx={{ p: 2, backgroundColor: "background.default" }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 2,
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                System Status
-              </Typography>
-
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                <Chip
-                  label={`Connection: ${connectionInfo.statusText}`}
-                  color={connectionInfo.statusColor}
-                  variant="outlined"
-                  size="small"
-                />
-
-                <Chip
-                  label={`Data Points: ${chartData.length}`}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                />
-
-                {lastReading && (
-                  <Chip
-                    label={`Last Update: ${format(
-                      new Date(lastReading.timestamp),
-                      "HH:mm:ss"
-                    )}`}
-                    color="success"
-                    variant="outlined"
-                    size="small"
-                  />
-                )}
-              </Box>
-            </Box>
-          </Paper>
+          <SystemStatus />
         </Grid>
 
         {/* Current Temperature Card */}
@@ -277,79 +326,45 @@ const HomePage = () => {
         </Grid>
 
         {/* Stats Cards */}
-        <Grid size={{sm: 8,lg:4 }}>
+        <Grid size={{sm: 8, lg: 4}}>
           <Grid container spacing={2}>
             <StatsCards />
           </Grid>
         </Grid>
 
-        {/* System Status */}
+        {/* System Status - Desktop */}
         <Grid size={{ md: 12, lg: 4 }} sx={{display:{xs:"none",lg:"block"}}}>
-          <Paper sx={{ p: 2, backgroundColor: "background.default" }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                flexWrap: "wrap",
-                gap: 2,
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                System Status
-              </Typography>
-
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                <Chip
-                  label={`Connection: ${connectionInfo.statusText}`}
-                  color={connectionInfo.statusColor}
-                  variant="outlined"
-                  size="small"
-                />
-
-                <Chip
-                  label={`Data Points: ${chartData.length}`}
-                  color="primary"
-                  variant="outlined"
-                  size="small"
-                />
-
-                {lastReading && (
-                  <Chip
-                    label={`Last Update: ${format(
-                      new Date(lastReading.timestamp),
-                      "HH:mm:ss"
-                    )}`}
-                    color="success"
-                    variant="outlined"
-                    size="small"
-                  />
-                )}
-              </Box>
-            </Box>
-          </Paper>
+          <SystemStatus />
         </Grid>
 
         {/* Real-time Chart */}
         <Grid size={{ xs: 12, lg: 8 }}>
-          <TemperatureChart
-            data={chartData}
-            title="Live Temperature Data"
-            height={400}
-            showStats={false}
-            timeFormat="HH:mm:ss"
-          />
+          {chartData.length > 0 ? (
+            <TemperatureChart
+              data={chartData}
+              title="Live Temperature Data"
+              height={400}
+              showStats={false}
+              timeFormat="HH:mm:ss"
+            />
+          ) : (
+            <ChartSkeleton />
+          )}
         </Grid>
 
         {/* Recent Readings Table */}
         <Grid item size={{ xs: 12, lg: 4 }}>
-          <TemperatureTable
-            data={latest10Readings}
-            title="Latest 10 Readings"
-            Height={400}
-            showPagination={false}
-            animateNewRows={true}
-          />
+          {latest10Readings.length > 0 ? (
+            <TemperatureTable
+              data={latest10Readings}
+              title="Latest 10 Readings"
+              Height={400}
+              showPagination={false}
+              animateNewRows={true}
+            />
+          ) : (
+            <TableSkeleton />
+          )}
         </Grid>
       </Grid>
     </Box>
