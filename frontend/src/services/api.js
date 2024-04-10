@@ -25,6 +25,7 @@ class ApiService {
       }
 
       const data = await response.json();
+      console.log(data);
       
       if (!data.success && data.error) {
         throw new Error(data.error);
@@ -43,10 +44,10 @@ class ApiService {
   }
 
   // Get readings by date range
-  async getReadingsByDateRange(startDate, endDate) {
+  async getReadingsByDateRange(startDate, endDate,page=1,pageSize=15) {
     const start = startDate.toISOString();
     const end = endDate.toISOString();
-    return this.request(`/readings/range?start=${start}&end=${end}`);
+    return this.request(`/readings/range?start=${start}&end=${end}&page=${page}&pageSize=${pageSize}`);
   }
 
   // Get temperature statistics
