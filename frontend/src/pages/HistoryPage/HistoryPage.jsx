@@ -10,6 +10,7 @@ import {
   Chip,
   Paper,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -145,6 +146,111 @@ const HistoryPage = () => {
     };
   }, [historyData?.data, dateRange.start, dateRange.end]);
 
+  // Skeleton Components
+  const StatisticsSkeleton = () => (
+    <Card>
+      <CardContent>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mb: 2,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+            <Skeleton variant="text" width="60%" height={24} />
+          </Box>
+          <Skeleton variant="rounded" width={120} height={32} />
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {[...Array(4)].map((_, index) => (
+            <Skeleton
+              key={index}
+              variant="rounded"
+              width={100}
+              height={32}
+              sx={{ borderRadius: '16px' }}
+            />
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const ChartSkeleton = () => (
+    <Card sx={{ height: 450 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Skeleton variant="circular" width={24} height={24} sx={{ mr: 1 }} />
+          <Skeleton variant="text" width="50%" height={24} />
+        </Box>
+        <Skeleton variant="rectangular" width="100%" height={380} sx={{ borderRadius: 1 }} />
+      </CardContent>
+    </Card>
+  );
+
+  const TableSkeleton = () => (
+    <Card sx={{ height: 450 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Skeleton variant="text" width="40%" height={24} />
+        </Box>
+        
+        {/* Table header skeleton */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, pb: 1, borderBottom: 1, borderColor: 'divider' }}>
+          <Skeleton variant="text" width="30%" height={20} />
+          <Skeleton variant="text" width="25%" height={20} />
+          <Skeleton variant="text" width="45%" height={20} />
+        </Box>
+        
+        {/* Table rows skeleton */}
+        {[...Array(12)].map((_, index) => (
+          <Box key={index} sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
+            <Skeleton variant="text" width="30%" height={20} />
+            <Skeleton variant="text" width="25%" height={20} />
+            <Skeleton variant="text" width="45%" height={20} />
+          </Box>
+        ))}
+        
+        {/* Pagination skeleton */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Skeleton variant="text" width="30%" height={20} />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Skeleton variant="rounded" width={32} height={32} />
+            <Skeleton variant="rounded" width={32} height={32} />
+            <Skeleton variant="rounded" width={32} height={32} />
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const LoadingOverlay = () => (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
+        borderRadius: 1,
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <CircularProgress size={40} />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Loading data...
+        </Typography>
+      </Box>
+    </Box>
+  );
+
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Box sx={{ flexGrow: 1 }}>
@@ -224,8 +330,10 @@ const HistoryPage = () => {
           )}
 
           {/* Period Statistics */}
-          {periodStats && (
-            <Grid size={{xs:12,lg:5}}>
+          <Grid size={{xs:12,lg:5}}>
+            {isLoading || isFetching ? (
+              <StatisticsSkeleton />
+            ) : periodStats ? (
               <Card>
                 <CardContent>
                   <Box
@@ -275,49 +383,119 @@ const HistoryPage = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          )}
+            ) : (
+              <StatisticsSkeleton />
+            )}
+          </Grid>
 
           {/* Chart */}
-          {historyData?.data && (
-            <Grid size={{xs:12, lg:7}}>
-              <TemperatureChart
-                data={historyData.data}
-                title="Historical Temperature Data"
-                height={450}
-                showStats={true}
-                timeFormat={
-                  historyData.data.length > 100
-                    ? 'MM/dd HH:mm'
-                    : historyData.data.length > 50
-                    ? 'HH:mm'
-                    : 'HH:mm:ss'
-                }
-              />
-            </Grid>
-          )}
+          <Grid size={{xs:12, lg:7}}>
+            {isLoading || isFetching ? (
+              <ChartSkeleton />
+            ) : historyData?.data?.length > 0 ? (
+              <Box sx={{ position: 'relative' }}>
+                <TemperatureChart
+                  data={historyData.data}
+                  title="Historical Temperature Data"
+                  height={450}
+                  showStats={true}
+                  timeFormat={
+                    historyData.data.length > 100
+                      ? 'MM/dd HH:mm'
+                      : historyData.data.length > 50
+                      ? 'HH:mm'
+                      : 'HH:mm:ss'
+                  }
+                />
+                {isFetching && <LoadingOverlay />}
+              </Box>
+            ) : !isError && searchTrigger > 0 ? (
+              <Card sx={{ height: 450 }}>
+                <CardContent
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}
+                >
+                  <DateIcon
+                    sx={{
+                      fontSize: 64,
+                      color: 'text.secondary',
+                      mb: 2,
+                    }}
+                  />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No Chart Data
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    No temperature readings found for the selected date range.
+                  </Typography>
+                </CardContent>
+              </Card>
+            ) : (
+              <ChartSkeleton />
+            )}
+          </Grid>
 
           {/* Table */}
-          {historyData?.data && (
-            <Grid size={{xs:12, lg:5}}>
-              <TemperatureTable
-                data={historyData.data}
-                title="Historical Readings"
-                maxHeight={450}
-                showPagination={true}
-                pageSize={pageSize}
-                page={page}
-                onPageChange={handlePageChange}
-                totalRows={historyData.totalCount || 0}
-                animateNewRows={false}
-              />
-            </Grid>
-          )}
+          <Grid size={{xs:12, lg:5}}>
+            {isLoading || isFetching ? (
+              <TableSkeleton />
+            ) : historyData?.data?.length > 0 ? (
+              <Box sx={{ position: 'relative' }}>
+                <TemperatureTable
+                  data={historyData.data}
+                  title="Historical Readings"
+                  maxHeight={450}
+                  showPagination={true}
+                  pageSize={pageSize}
+                  page={page}
+                  onPageChange={handlePageChange}
+                  totalRows={historyData.totalCount || 0}
+                  animateNewRows={false}
+                />
+                {isFetching && <LoadingOverlay />}
+              </Box>
+            ) : !isError && searchTrigger > 0 ? (
+              <Card sx={{ height: 450 }}>
+                <CardContent
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}
+                >
+                  <DateIcon
+                    sx={{
+                      fontSize: 64,
+                      color: 'text.secondary',
+                      mb: 2,
+                    }}
+                  />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No Table Data
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    No temperature readings found for the selected date range.
+                  </Typography>
+                </CardContent>
+              </Card>
+            ) : (
+              <TableSkeleton />
+            )}
+          </Grid>
 
-          {/* No Data */}
+          {/* No Data - Full Width Message */}
           {!isLoading &&
             !isError &&
-            historyData?.data?.length === 0 && (
+            !isFetching &&
+            historyData?.data?.length === 0 &&
+            searchTrigger > 0 && (
               <Grid size={{xs:12}}>
                 <Card>
                   <CardContent
